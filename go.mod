@@ -1,4 +1,4 @@
-module dulumi
+module github.com/sallgoood/dulumi
 
 go 1.15
 
