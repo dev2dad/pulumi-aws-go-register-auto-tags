@@ -32,6 +32,9 @@ func TestRegisterAutoTags(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
+		taggableNoTag, err := s3.NewBucket(ctx, "bucket-no-tag", &s3.BucketArgs{})
+		assert.NoError(t, err)
+
 		_, err = cloudfront.NewOriginAccessIdentity(ctx, "originAccessIdentity", &cloudfront.OriginAccessIdentityArgs{})
 		assert.NoError(t, err)
 
@@ -39,11 +42,14 @@ func TestRegisterAutoTags(t *testing.T) {
 		wg.Add(1)
 
 		// Test if the service has tags and a name tag.
-		plm.All(taggable.Tags).ApplyT(func(all []interface{}) error {
+		plm.All(taggable.Tags, taggableNoTag.Tags).ApplyT(func(all []interface{}) error {
 			tags := all[0].(map[string]string)
+			tagsNotTagged := all[1].(map[string]string)
 
 			assert.Containsf(t, tags, "Environment", "missing a Environment tag")
 			assert.Containsf(t, tags, "Env", "missing a Env tag")
+			assert.Containsf(t, tagsNotTagged, "Environment", "missing a Environment tag")
+			assert.NotContainsf(t, tagsNotTagged, "Env", "should be missing a Env tag")
 			wg.Done()
 			return nil
 		})
