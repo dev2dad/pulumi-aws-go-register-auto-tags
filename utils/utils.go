@@ -7,7 +7,7 @@ import (
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 )
 
-func RegisterAutoTags(ctx *plm.Context, autoTags map[string]string) {
+func RegisterAutoTags(ctx *plm.Context, autoTags plm.StringMap) {
 	err := ctx.RegisterStackTransformation(
 		func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
 			ptr := reflect.ValueOf(args.Props)
@@ -17,14 +17,14 @@ func RegisterAutoTags(ctx *plm.Context, autoTags map[string]string) {
 
 				if tags.IsValid() {
 
-					var tagsMap plm.Map
+					var tagsMap plm.StringMap
 					if !tags.IsZero() {
-						tagsMap = tags.Interface().(plm.Map)
+						tagsMap = tags.Interface().(plm.StringMap)
 					} else {
-						tagsMap = map[string]plm.Input{}
+						tagsMap = map[string]plm.StringInput{}
 					}
 					for k, v := range autoTags {
-						tagsMap[k] = plm.String(v)
+						tagsMap[k] = v
 					}
 					tags.Set(reflect.ValueOf(tagsMap))
 
