@@ -11,7 +11,7 @@ func RegisterAutoTags(ctx *plm.Context, autoTags map[string]string) {
 	err := ctx.RegisterStackTransformation(
 		func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
 			ptr := reflect.ValueOf(args.Props)
-			if !ptr.IsZero() {
+			if ptr.IsValid() {
 				val := ptr.Elem()
 				tags := val.FieldByName("Tags")
 
