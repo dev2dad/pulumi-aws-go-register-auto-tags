@@ -66,7 +66,7 @@ func NewFargateApi(ctx *plm.Context,
 	}
 
 	initialTask, err := ecs.NewTaskDefinition(ctx, "app-task", &ecs.TaskDefinitionArgs{
-		Family:                  plm.String("fargate-task-definition"),
+		Family:                  plm.String(fmt.Sprintf("%v-%v", service, env)),
 		Cpu:                     plm.String(appCpu),
 		Memory:                  plm.String(appMemory),
 		NetworkMode:             plm.String("awsvpc"),
