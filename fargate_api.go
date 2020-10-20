@@ -106,7 +106,7 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	autoscaleResourceId := plm.String(fmt.Sprintf("service/%v/%v", cluster.ClusterName, svc.Name))
+	autoscaleResourceId := plm.String(fmt.Sprintf("service/%v/%v", cluster.ClusterName, fmt.Sprintf("%v", svc.Name)))
 
 	_, err = aas.NewTarget(ctx, "autoscaleTarget", &aas.TargetArgs{
 		MaxCapacity:       plm.Int(scaleMax),
