@@ -62,8 +62,7 @@ func NewFargateApi(ctx *plm.Context,
 					Value: plm.String("enabled"),
 				},
 			},
-		}, plm.Parent(&dfa),
-			plm.Protect(true))
+		}, plm.Parent(&dfa))
 		if err != nil {
 			return nil, err
 		}
