@@ -282,14 +282,14 @@ func containerTemplate(logGroupName string) string {
     "environment": [],
     "mountPoints": [],
     "volumesFrom": [],
-    "image": "906394416424.dkr.ecr.us-west-2.amazonaws.com/aws-for-fluent-bit:latest",
-    "firelensConfiguration":{
-        "type":"fluentbit",
-        "options":{
-           "config-file-type":"s3",
-           "config-file-value":"arn:aws:s3:::drama-terraform-state/fluent-bit.conf"
-         }
-     },
+    "image": "784015586554.dkr.ecr.ap-northeast-1.amazonaws.com/mybridge-aws-fluent-bit",
+    "firelensConfiguration": {
+      "type": "fluentbit",
+      "options": {
+        "config-file-type": "file",
+        "config-file-value": "/fluent-bit/etc/mybridge-fluent-bit.conf"
+      }
+    },
     "user": "0",
     "name": "log-router"
   }
