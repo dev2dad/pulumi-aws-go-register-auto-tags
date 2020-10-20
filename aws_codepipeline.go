@@ -100,9 +100,18 @@ func AddCodeBuildAction(actions pipeline.PipelineStageActionArray, buildProjectN
 	})
 }
 
-func NewDefaultCIStage(gitRepo string, gitBranch string, gitPolling bool, buildProjectName string) pipeline.PipelineStageArgs {
+func NewGithubSourceStage(gitRepo string, gitBranch string, gitPolling bool) pipeline.PipelineStageArgs {
 	actions := pipeline.PipelineStageActionArray{}
 	actions = AddGithubSourceAction(actions, gitRepo, gitBranch, gitPolling)
+
+	return pipeline.PipelineStageArgs{
+		Name:    plm.String("CI"),
+		Actions: actions,
+	}
+}
+
+func NewCodebuildStage(buildProjectName string) pipeline.PipelineStageArgs {
+	actions := pipeline.PipelineStageActionArray{}
 	actions = AddCodeBuildAction(actions, buildProjectName)
 
 	return pipeline.PipelineStageArgs{

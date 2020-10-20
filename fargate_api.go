@@ -101,7 +101,7 @@ func NewFargateApi(ctx *plm.Context,
 			},
 		},
 	}, plm.DependsOn([]plm.Resource{listener}),
-		plm.IgnoreChanges([]string{"taskDefinition", "desiredCount"}),
+		//plm.IgnoreChanges([]string{"taskDefinition", "desiredCount"}),
 		plm.Parent(&dfa))
 	if err != nil {
 		return nil, err
