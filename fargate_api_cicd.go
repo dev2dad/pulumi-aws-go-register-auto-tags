@@ -43,7 +43,7 @@ func NewFargateApiCICD(ctx *plm.Context,
 		return nil, err
 	}
 
-	buildPrj, err := build.NewProject(ctx, "codebuild", &build.ProjectArgs{
+	_, err = build.NewProject(ctx, "codebuild", &build.ProjectArgs{
 		Artifacts: build.ProjectArtifactsArgs{
 			Type: plm.String("CODEPIPELINE"),
 		},
@@ -73,7 +73,7 @@ func NewFargateApiCICD(ctx *plm.Context,
 		},
 		Stages: pipeline.PipelineStageArray{
 			NewGithubSourceStage(gitRepo, gitBranch, gitPolling),
-			NewCodebuildStage(fmt.Sprintf("%v", buildPrj.Name)),
+			NewCodebuildStage(serviceEnv),
 			fargateApiCD(ecsCluster, ecsService, gitRepo, requireApproval, requireNoti),
 		},
 	}, plm.Parent(&cicd),
