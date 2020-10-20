@@ -21,6 +21,7 @@ func NewFargateApi(ctx *plm.Context,
 	service string,
 	env string,
 	taskSubnetIds []string,
+	taskSecurityGroupIds []string,
 	subnetIds []string,
 	securityGroupIds []string,
 	vpcId string,
@@ -94,7 +95,7 @@ func NewFargateApi(ctx *plm.Context,
 		NetworkConfiguration: &ecs.ServiceNetworkConfigurationArgs{
 			AssignPublicIp: plm.Bool(true),
 			Subnets:        utils.ToPulumiStringArray(taskSubnetIds),
-			SecurityGroups: utils.ToPulumiStringArray(securityGroupIds),
+			SecurityGroups: utils.ToPulumiStringArray(taskSecurityGroupIds),
 		},
 		LoadBalancers: ecs.ServiceLoadBalancerArray{
 			ecs.ServiceLoadBalancerArgs{
