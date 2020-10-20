@@ -4,6 +4,7 @@ import (
 	"fmt"
 	aas "github.com/pulumi/pulumi-aws/sdk/v3/go/aws/appautoscaling"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/ecs"
+	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/cloudwatch"
 	alb "github.com/pulumi/pulumi-aws/sdk/v3/go/aws/lb"
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"github.com/sallgoood/dulumi/utils"
@@ -80,6 +81,14 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
+	logGroup, err := cloudwatch.NewLogGroup(ctx, "logGroup", &cloudwatch.LogGroupArgs{
+		Name:            plm.String(fmt.Sprintf("%v-%v", service, env)),
+		RetentionInDays: plm.IntPtr(30),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	initialTask, err := ecs.NewTaskDefinition(ctx, "app-task", &ecs.TaskDefinitionArgs{
 		Family:                  plm.String("fargate-task-definition"),
 		Cpu:                     plm.String(appCpu),
@@ -87,7 +96,7 @@ func NewFargateApi(ctx *plm.Context,
 		NetworkMode:             plm.String("awsvpc"),
 		RequiresCompatibilities: plm.StringArray{plm.String("FARGATE")},
 		ExecutionRoleArn:        plm.String(taskRole),
-		ContainerDefinitions:    plm.String(containerTemplate()),
+		ContainerDefinitions:    plm.String(containerTemplate(fmt.Sprintf("%v", logGroup.Name))),
 	}, plm.Parent(&dfa))
 	if err != nil {
 		return nil, err
@@ -150,7 +159,8 @@ func NewFargateApi(ctx *plm.Context,
 			ScaleOutCooldown: plm.IntPtr(1),
 			TargetValue:      plm.Float64(scaleCpuPercent),
 		},
-	}, plm.Parent(&dfa))
+	}, plm.Parent(&dfa),
+	plm.DependsOn([]plm.Resource{svc}))
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +250,7 @@ func apiAlb(
 	return tg, https, nil
 }
 
-func containerTemplate() string {
+func containerTemplate(logGroupName string) string {
 	return fmt.Sprintf(`[
   {
     "name": "app",
@@ -303,5 +313,5 @@ func containerTemplate() string {
     "user": "0",
     "name": "log-router"
   }
-]`)
+]`, logGroupName)
 }
