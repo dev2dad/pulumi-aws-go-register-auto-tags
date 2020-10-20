@@ -90,7 +90,7 @@ func NewFargateApi(ctx *plm.Context,
 			Type: plm.StringPtr("ECS"),
 		},
 		NetworkConfiguration: &ecs.ServiceNetworkConfigurationArgs{
-			AssignPublicIp: plm.Bool(true),
+			AssignPublicIp: plm.Bool(false),
 			Subnets:        utils.ToPulumiStringArray(subnetIds),
 			SecurityGroups: utils.ToPulumiStringArray(securityGroupIds),
 		},
@@ -235,7 +235,7 @@ func containerTemplate(logGroupName string) string {
 	return fmt.Sprintf(`[
   {
     "name": "app",
-    "image": "nginx:latest",
+    "image": "784015586554.dkr.ecr.ap-northeast-1.amazonaws.com/nginx:latest",
     "portMappings": [
       {
         "containerPort": 80,
