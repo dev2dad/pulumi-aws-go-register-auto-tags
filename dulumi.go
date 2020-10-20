@@ -82,25 +82,13 @@ func NewFargateApiInfra(ctx *plm.Context,
 	opts ...plm.ResourceOption, ) error {
 
 	utils.RegisterAutoTags(ctx, plm.StringMap{
+		"Role": plm.String("infra"),
 		"Environment": plm.String(env),
-		"Name":        plm.String(service),
+		"Service": plm.String(service),
+		"Team":        plm.String("dev"),
 	})
 
 	utils.IgnoreChanges(ctx, ignoreGlobal, ignoreTypes, ignoreProps)
-
-	//err := ctx.RegisterStackTransformation(func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
-	//	return &plm.ResourceTransformationResult{
-	//		Props: args.Props,
-	//		Opts: append(args.Opts, plm.IgnoreChanges([]string{
-	//			"taskDefinition",
-	//			"containerDefinitions",
-	//			"desiredCount",
-	//		})),
-	//	}
-	//})
-	//if err != nil {
-	//	return err
-	//}
 
 	api, err := NewFargateApi(
 		ctx,
