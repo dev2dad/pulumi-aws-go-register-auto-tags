@@ -115,7 +115,8 @@ func NewFargateApi(ctx *plm.Context,
 		ResourceId:        autoscaleResourceId,
 		ScalableDimension: plm.String("ecs:service:DesiredCount"),
 		ServiceNamespace:  plm.String("ecs"),
-	}, plm.Parent(&dfa))
+	}, plm.Parent(&dfa),
+	plm.DependsOn([]plm.Resource{svc}))
 	if err != nil {
 		return nil, err
 	}

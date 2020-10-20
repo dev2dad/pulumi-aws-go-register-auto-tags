@@ -105,7 +105,7 @@ func NewGithubSourceStage(gitRepo string, gitBranch string, gitPolling bool) pip
 	actions = AddGithubSourceAction(actions, gitRepo, gitBranch, gitPolling)
 
 	return pipeline.PipelineStageArgs{
-		Name:    plm.String("CI"),
+		Name:    plm.String("Source"),
 		Actions: actions,
 	}
 }
@@ -115,7 +115,7 @@ func NewCodebuildStage(buildProjectName string) pipeline.PipelineStageArgs {
 	actions = AddCodeBuildAction(actions, buildProjectName)
 
 	return pipeline.PipelineStageArgs{
-		Name:    plm.String("CI"),
+		Name:    plm.String("Build"),
 		Actions: actions,
 	}
 }
