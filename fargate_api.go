@@ -38,10 +38,6 @@ func NewFargateApi(ctx *plm.Context,
 	opts ...plm.ResourceOption,
 ) (*FargateApi, error) {
 
-	if appPort == 0 {
-		appPort = 80
-	}
-
 	var dfa FargateApi
 	err := ctx.RegisterComponentResource("drama:server:fargate-api", "drama-fargate-api", &dfa, opts...)
 	if err != nil {

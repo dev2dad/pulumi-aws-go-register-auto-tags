@@ -76,19 +76,7 @@ func NewFargateApiInfra(ctx *plm.Context,
 	requireApproval bool,
 	requireNoti bool,
 	buildSpec string,
-	ignoreGlobal bool,
-	ignoreTypes []string,
-	ignoreProps []string,
 	opts ...plm.ResourceOption, ) error {
-
-	utils.RegisterAutoTags(ctx, plm.StringMap{
-		"Role": plm.String("infra"),
-		"Environment": plm.String(env),
-		"Service": plm.String(service),
-		"Team":        plm.String("dev"),
-	})
-
-	utils.IgnoreChanges(ctx, ignoreGlobal, ignoreTypes, ignoreProps)
 
 	api, err := NewFargateApi(
 		ctx,
