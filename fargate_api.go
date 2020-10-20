@@ -73,7 +73,8 @@ func NewFargateApi(ctx *plm.Context,
 		RequiresCompatibilities: plm.StringArray{plm.String("FARGATE")},
 		ExecutionRoleArn:        plm.String(taskRole),
 		ContainerDefinitions:    plm.String(containerTemplate(fmt.Sprintf("%v", fmt.Sprintf("%v-%v", service, env)))),
-	}, plm.Parent(&dfa))
+	}, plm.Parent(&dfa),
+	plm.DependsOn([]plm.Resource{logGroup}))
 	if err != nil {
 		return nil, err
 	}
