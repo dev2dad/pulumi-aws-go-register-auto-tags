@@ -33,6 +33,7 @@ func NewFargateApi(ctx *plm.Context,
 	scaleMax int,
 	scaleMin int,
 	scaleCpuPercent float64,
+	containerDefinitions string,
 	opts ...plm.ResourceOption,
 ) (*FargateApi, error) {
 
@@ -74,7 +75,7 @@ func NewFargateApi(ctx *plm.Context,
 		RequiresCompatibilities: plm.StringArray{plm.String("FARGATE")},
 		TaskRoleArn:             plm.String(taskRole),
 		ExecutionRoleArn:        plm.String(taskRole),
-		ContainerDefinitions:    plm.String(containerTemplate(fmt.Sprintf("%v", fmt.Sprintf("%v-%v", service, env)))),
+		ContainerDefinitions:    plm.String(containerDefinitions),
 	}, plm.Parent(&dfa),
 		plm.DependsOn([]plm.Resource{logGroup}))
 	if err != nil {
@@ -91,7 +92,7 @@ func NewFargateApi(ctx *plm.Context,
 			Type: plm.StringPtr("ECS"),
 		},
 		NetworkConfiguration: &ecs.ServiceNetworkConfigurationArgs{
-			AssignPublicIp: plm.Bool(false),
+			AssignPublicIp: plm.Bool(true),
 			Subnets:        utils.ToPulumiStringArray(taskSubnetIds),
 			SecurityGroups: utils.ToPulumiStringArray(securityGroupIds),
 		},
@@ -230,70 +231,4 @@ func apiAlb(
 	}
 
 	return tg, https, nil
-}
-
-func containerTemplate(logGroupName string) string {
-	return fmt.Sprintf(`[
-  {
-    "name": "app",
-    "image": "784015586554.dkr.ecr.ap-northeast-1.amazonaws.com/nginx:latest",
-    "portMappings": [
-      {
-        "containerPort": 80,
-        "hostPort": 80,
-        "protocol": "tcp"
-      }
-    ],
-    "environment": [],
-    "ulimits": [{
-      "name": "nofile",
-      "softLimit": 65535,
-      "hardLimit": 65535
-    }],
-    "healthCheck": {
-      "retries": 3,
-      "command": [
-        "CMD-SHELL",
-        "echo hello"
-      ],
-      "timeout": 5,
-      "interval": 30
-    },
-    "logConfiguration": {
-      "logDriver": "awsfirelens"
-    },
-    "essential": true
-  },
-  {
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "%v",
-        "awslogs-region": "ap-northeast-1",
-        "awslogs-stream-prefix": "fluentbit"
-      }
-    },
-    "portMappings": [
-      {
-        "hostPort": 24224,
-        "protocol": "tcp",
-        "containerPort": 24224
-      }
-    ],
-    "cpu": 0,
-    "environment": [],
-    "mountPoints": [],
-    "volumesFrom": [],
-    "image": "784015586554.dkr.ecr.ap-northeast-1.amazonaws.com/mybridge-aws-fluent-bit",
-    "firelensConfiguration": {
-      "type": "fluentbit",
-      "options": {
-        "config-file-type": "file",
-        "config-file-value": "/fluent-bit/etc/mybridge-fluent-bit.conf"
-      }
-    },
-    "user": "0",
-    "name": "log-router"
-  }
-]`, logGroupName)
 }

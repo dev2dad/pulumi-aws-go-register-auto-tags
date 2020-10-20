@@ -65,6 +65,7 @@ func NewFargateApiInfra(ctx *plm.Context,
 	scaleMax int,
 	scaleMin int,
 	scaleCpuPercent float64,
+	containerDefinitions string,
 
 	buildRole string,
 	pipelineRole string,
@@ -98,6 +99,7 @@ func NewFargateApiInfra(ctx *plm.Context,
 		scaleMax,
 		scaleMin,
 		scaleCpuPercent,
+		containerDefinitions,
 		opts...
 	)
 	if err != nil {
