@@ -22,8 +22,8 @@ func NewFargateApi(ctx *plm.Context,
 	env string,
 	taskSubnetIds []string,
 	taskSecurityGroupIds []string,
-	subnetIds []string,
-	securityGroupIds []string,
+	lbSubnetIds []string,
+	lbSecurityGroupIds []string,
 	vpcId string,
 	taskRole string,
 	appPort int,
@@ -55,8 +55,72 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	targetGroup, listener, err := apiAlb(ctx, service, env, subnetIds, securityGroupIds, vpcId, appPort, appHealthCheckPath, certificateArn, dfa)
+	lb, err := alb.NewLoadBalancer(ctx, "alb", &alb.LoadBalancerArgs{
+		Name:           plm.String(fmt.Sprintf("%v-%v", service, env)),
+		Subnets:        utils.ToPulumiStringArray(lbSubnetIds),
+		SecurityGroups: utils.ToPulumiStringArray(lbSecurityGroupIds),
+	}, plm.Parent(&dfa))
 	if err != nil {
+		return nil, err
+	}
+	tg, err := alb.NewTargetGroup(ctx, "targetGroup", &alb.TargetGroupArgs{
+		Name:                plm.String(fmt.Sprintf("%v-%v", service, env)),
+		Port:                plm.Int(appPort),
+		Protocol:            plm.String("HTTP"),
+		TargetType:          plm.String("ip"),
+		VpcId:               plm.String(vpcId),
+		DeregistrationDelay: plm.Int(1),
+		HealthCheck: alb.TargetGroupHealthCheckArgs{
+			Enabled:            plm.BoolPtr(true),
+			HealthyThreshold:   plm.IntPtr(3),
+			UnhealthyThreshold: plm.IntPtr(3),
+			Interval:           plm.IntPtr(30),
+			Matcher:            plm.StringPtr("200-299"),
+			Path:               plm.StringPtr(appHealthCheckPath),
+			Port:               plm.StringPtr(strconv.Itoa(appPort)),
+			Protocol:           plm.StringPtr("HTTP"),
+			Timeout:            plm.IntPtr(5),
+		},
+	}, plm.Parent(&dfa))
+	if err != nil {
+		return nil, err
+	}
+	_, err = alb.NewListener(ctx, "httpListener", &alb.ListenerArgs{
+		LoadBalancerArn: lb.Arn,
+		Port:            plm.Int(80),
+		DefaultActions: alb.ListenerDefaultActionArray{
+			alb.ListenerDefaultActionArgs{
+				Type: plm.String("redirect"),
+				Redirect: alb.ListenerDefaultActionRedirectArgs{
+					Port:       plm.StringPtr("443"),
+					Protocol:   plm.StringPtr("HTTPS"),
+					StatusCode: plm.String("HTTP_301"),
+				},
+			},
+		},
+	}, plm.Parent(&dfa))
+	if err != nil {
+		return nil, err
+	}
+	https, err := alb.NewListener(ctx, "httpsListener", &alb.ListenerArgs{
+		LoadBalancerArn: lb.Arn,
+		Protocol:        plm.String("HTTPS"),
+		Port:            plm.Int(443),
+		CertificateArn:  plm.StringPtr(certificateArn),
+		DefaultActions: alb.ListenerDefaultActionArray{
+			alb.ListenerDefaultActionArgs{
+				Type:           plm.String("forward"),
+				TargetGroupArn: tg.Arn,
+			},
+		},
+	}, plm.Parent(&dfa))
+	if err != nil {
+		return nil, err
+	}
+
+	if err = ctx.RegisterResourceOutputs(&dfa, plm.Map{
+		"dns": lb.DnsName,
+	}); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +132,7 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	initialTask, err := ecs.NewTaskDefinition(ctx, "app-task", &ecs.TaskDefinitionArgs{
+	initialTask, err := ecs.NewTaskDefinition(ctx, "ecsTaskDefinition", &ecs.TaskDefinitionArgs{
 		Family:                  plm.String(fmt.Sprintf("%v-%v", service, env)),
 		Cpu:                     plm.String(appCpu),
 		Memory:                  plm.String(appMemory),
@@ -83,7 +147,7 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	svc, err := ecs.NewService(ctx, "app-svc", &ecs.ServiceArgs{
+	svc, err := ecs.NewService(ctx, "ecsService", &ecs.ServiceArgs{
 		Name:           plm.String(fmt.Sprintf("%v-%v", service, env)),
 		Cluster:        plm.String(cluster.Arn),
 		TaskDefinition: initialTask.Arn,
@@ -100,12 +164,12 @@ func NewFargateApi(ctx *plm.Context,
 		LoadBalancers: ecs.ServiceLoadBalancerArray{
 			ecs.ServiceLoadBalancerArgs{
 				ElbName:        plm.String(fmt.Sprintf("%v-%v", service, env)),
-				TargetGroupArn: targetGroup.Arn,
+				TargetGroupArn: tg.Arn,
 				ContainerName:  plm.String("app"),
 				ContainerPort:  plm.Int(appPort),
 			},
 		},
-	}, plm.DependsOn([]plm.Resource{listener}),
+	}, plm.DependsOn([]plm.Resource{https}),
 		plm.Parent(&dfa))
 	if err != nil {
 		return nil, err
@@ -148,88 +212,4 @@ func NewFargateApi(ctx *plm.Context,
 	}
 
 	return &dfa, nil
-}
-
-func apiAlb(
-	ctx *plm.Context,
-	service string,
-	env string,
-	subnetIds []string,
-	securityGroupIds []string,
-	vpcId string,
-	appPort int,
-	appHealthCheckPath string,
-	certificateArn string,
-	dfa FargateApi,
-) (*alb.TargetGroup, *alb.Listener, error) {
-	lb, err := alb.NewLoadBalancer(ctx, "lb", &alb.LoadBalancerArgs{
-		Name:           plm.String(fmt.Sprintf("%v-%v", service, env)),
-		Subnets:        utils.ToPulumiStringArray(subnetIds),
-		SecurityGroups: utils.ToPulumiStringArray(securityGroupIds),
-	}, plm.Parent(&dfa))
-	if err != nil {
-		return nil, nil, err
-	}
-	tg, err := alb.NewTargetGroup(ctx, "tg", &alb.TargetGroupArgs{
-		Name:                plm.String(fmt.Sprintf("%v-%v", service, env)),
-		Port:                plm.Int(appPort),
-		Protocol:            plm.String("HTTP"),
-		TargetType:          plm.String("ip"),
-		VpcId:               plm.String(vpcId),
-		DeregistrationDelay: plm.Int(1),
-		HealthCheck: alb.TargetGroupHealthCheckArgs{
-			Enabled:            plm.BoolPtr(true),
-			HealthyThreshold:   plm.IntPtr(3),
-			UnhealthyThreshold: plm.IntPtr(3),
-			Interval:           plm.IntPtr(30),
-			Matcher:            plm.StringPtr("200-299"),
-			Path:               plm.StringPtr(appHealthCheckPath),
-			Port:               plm.StringPtr(strconv.Itoa(appPort)),
-			Protocol:           plm.StringPtr("HTTP"),
-			Timeout:            plm.IntPtr(5),
-		},
-	}, plm.Parent(&dfa))
-	if err != nil {
-		return nil, nil, err
-	}
-	_, err = alb.NewListener(ctx, "httpListener", &alb.ListenerArgs{
-		LoadBalancerArn: lb.Arn,
-		Port:            plm.Int(80),
-		DefaultActions: alb.ListenerDefaultActionArray{
-			alb.ListenerDefaultActionArgs{
-				Type: plm.String("redirect"),
-				Redirect: alb.ListenerDefaultActionRedirectArgs{
-					Port:       plm.StringPtr("443"),
-					Protocol:   plm.StringPtr("HTTPS"),
-					StatusCode: plm.String("HTTP_301"),
-				},
-			},
-		},
-	}, plm.Parent(&dfa))
-	if err != nil {
-		return nil, nil, err
-	}
-	https, err := alb.NewListener(ctx, "httpSListener", &alb.ListenerArgs{
-		LoadBalancerArn: lb.Arn,
-		Protocol:        plm.String("HTTPS"),
-		Port:            plm.Int(443),
-		CertificateArn:  plm.StringPtr(certificateArn),
-		DefaultActions: alb.ListenerDefaultActionArray{
-			alb.ListenerDefaultActionArgs{
-				Type:           plm.String("forward"),
-				TargetGroupArn: tg.Arn,
-			},
-		},
-	}, plm.Parent(&dfa))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if err = ctx.RegisterResourceOutputs(&dfa, plm.Map{
-		"dns": lb.DnsName,
-	}); err != nil {
-		return nil, nil, err
-	}
-
-	return tg, https, nil
 }

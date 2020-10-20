@@ -30,7 +30,7 @@ func NewFargateApiCICD(ctx *plm.Context,
 	opts ...plm.ResourceOption) (*FargateApiCICD, error) {
 
 	var cicd FargateApiCICD
-	err := ctx.RegisterComponentResource("drama:web:s3-static-cicd", "drama-s3-static-web-cicd", &cicd, opts...)
+	err := ctx.RegisterComponentResource("drama:server:fargate-api-cicd", "drama-fargate-api-cicd", &cicd, opts...)
 	if err != nil {
 		return nil, err
 	}
