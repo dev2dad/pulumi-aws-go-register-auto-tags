@@ -72,7 +72,7 @@ func NewFargateApi(ctx *plm.Context,
 		NetworkMode:             plm.String("awsvpc"),
 		RequiresCompatibilities: plm.StringArray{plm.String("FARGATE")},
 		ExecutionRoleArn:        plm.String(taskRole),
-		ContainerDefinitions:    plm.String(containerTemplate(fmt.Sprintf("%v", logGroup.Name))),
+		ContainerDefinitions:    plm.String(containerTemplate(fmt.Sprintf("%v", fmt.Sprintf("%v-%v", service, env)))),
 	}, plm.Parent(&dfa))
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	autoscaleResourceId := plm.String(fmt.Sprintf("service/%v/%v", cluster.ClusterName, fmt.Sprintf("%v", svc.Name)))
+	autoscaleResourceId := plm.String(fmt.Sprintf("service/%v/%v", cluster.ClusterName, fmt.Sprintf("%v-%v", service, env)))
 
 	_, err = aas.NewTarget(ctx, "autoscaleTarget", &aas.TargetArgs{
 		MaxCapacity:       plm.Int(scaleMax),
