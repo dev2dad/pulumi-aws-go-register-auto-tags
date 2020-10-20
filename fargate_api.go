@@ -8,6 +8,7 @@ import (
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"github.com/sallgoood/dulumi/utils"
 	"log"
+	"strconv"
 )
 
 type FargateApi struct {
@@ -190,7 +191,7 @@ func apiAlb(
 			Interval:           plm.IntPtr(30),
 			Matcher:            plm.StringPtr("200-299"),
 			Path:               plm.StringPtr(appHealthCheckPath),
-			Port:               plm.StringPtr(string(rune(appPort))),
+			Port:               plm.StringPtr(strconv.Itoa(appPort)),
 			Protocol:           plm.StringPtr("HTTP"),
 			Timeout:            plm.IntPtr(5),
 		},
