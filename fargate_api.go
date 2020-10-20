@@ -3,12 +3,11 @@ package dulumi
 import (
 	"fmt"
 	aas "github.com/pulumi/pulumi-aws/sdk/v3/go/aws/appautoscaling"
-	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/ecs"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/cloudwatch"
+	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/ecs"
 	alb "github.com/pulumi/pulumi-aws/sdk/v3/go/aws/lb"
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"github.com/sallgoood/dulumi/utils"
-	"log"
 	"strconv"
 )
 
@@ -46,33 +45,11 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	var ecsClusterName string
-	var ecsClusterArn string
-
-	existCluster, err := ecs.LookupCluster(ctx, &ecs.LookupClusterArgs{
+	cluster, err := ecs.LookupCluster(ctx, &ecs.LookupClusterArgs{
 		ClusterName: service,
 	})
 	if err != nil {
-		log.Printf("ecs cluster, %v does not exists, details : %v", service, err)
-		cluster, err := ecs.NewCluster(ctx, service, &ecs.ClusterArgs{
-			Name: plm.StringPtr(service),
-			Settings: ecs.ClusterSettingArray{
-				ecs.ClusterSettingArgs{
-					Name:  plm.String("containerInsights"),
-					Value: plm.String("enabled"),
-				},
-			},
-		}, plm.Parent(&dfa))
-		if err != nil {
-			return nil, err
-		}
-
-		ecsClusterName = fmt.Sprintf("%v", cluster.Name)
-		ecsClusterArn = fmt.Sprintf("%v", cluster.Arn)
-
-	} else {
-		ecsClusterName = existCluster.ClusterName
-		ecsClusterArn = existCluster.Arn
+		return nil, err
 	}
 
 	targetGroup, listener, err := apiAlb(ctx, service, env, subnetIds, securityGroupIds, vpcId, appPort, appHealthCheckPath, certificateArn, dfa)
@@ -103,7 +80,7 @@ func NewFargateApi(ctx *plm.Context,
 
 	svc, err := ecs.NewService(ctx, "app-svc", &ecs.ServiceArgs{
 		Name:           plm.String(fmt.Sprintf("%v-%v", service, env)),
-		Cluster:        plm.String(ecsClusterArn),
+		Cluster:        plm.String(cluster.Arn),
 		TaskDefinition: initialTask.Arn,
 		DesiredCount:   plm.Int(1),
 		LaunchType:     plm.String("FARGATE"),
@@ -129,7 +106,7 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	autoscaleResourceId := plm.String(fmt.Sprintf("service/%v/%v", plm.String(ecsClusterName), svc.Name))
+	autoscaleResourceId := plm.String(fmt.Sprintf("service/%v/%v", cluster.ClusterName, svc.Name))
 
 	_, err = aas.NewTarget(ctx, "autoscaleTarget", &aas.TargetArgs{
 		MaxCapacity:       plm.Int(scaleMax),
@@ -159,7 +136,7 @@ func NewFargateApi(ctx *plm.Context,
 			TargetValue:      plm.Float64(scaleCpuPercent),
 		},
 	}, plm.Parent(&dfa),
-	plm.DependsOn([]plm.Resource{svc}))
+		plm.DependsOn([]plm.Resource{svc}))
 	if err != nil {
 		return nil, err
 	}
