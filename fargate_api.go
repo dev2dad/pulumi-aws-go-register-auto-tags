@@ -74,7 +74,7 @@ func NewFargateApi(ctx *plm.Context,
 		ExecutionRoleArn:        plm.String(taskRole),
 		ContainerDefinitions:    plm.String(containerTemplate(fmt.Sprintf("%v", fmt.Sprintf("%v-%v", service, env)))),
 	}, plm.Parent(&dfa),
-	plm.DependsOn([]plm.Resource{logGroup}))
+		plm.DependsOn([]plm.Resource{logGroup}))
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func NewFargateApi(ctx *plm.Context,
 		ScalableDimension: plm.String("ecs:service:DesiredCount"),
 		ServiceNamespace:  plm.String("ecs"),
 	}, plm.Parent(&dfa),
-	plm.DependsOn([]plm.Resource{svc}))
+		plm.DependsOn([]plm.Resource{svc}))
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +206,7 @@ func apiAlb(
 	}
 	https, err := alb.NewListener(ctx, "httpSListener", &alb.ListenerArgs{
 		LoadBalancerArn: lb.Arn,
+		Protocol:        plm.String("HTTPS"),
 		Port:            plm.Int(443),
 		CertificateArn:  plm.StringPtr(certificateArn),
 		DefaultActions: alb.ListenerDefaultActionArray{
