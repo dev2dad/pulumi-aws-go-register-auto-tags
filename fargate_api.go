@@ -190,7 +190,6 @@ func apiAlb(
 	_, err = alb.NewListener(ctx, "httpListener", &alb.ListenerArgs{
 		LoadBalancerArn: lb.Arn,
 		Port:            plm.Int(80),
-		CertificateArn:  plm.StringPtr(certificateArn),
 		DefaultActions: alb.ListenerDefaultActionArray{
 			alb.ListenerDefaultActionArgs{
 				Type: plm.String("redirect"),
@@ -208,6 +207,7 @@ func apiAlb(
 	https, err := alb.NewListener(ctx, "httpSListener", &alb.ListenerArgs{
 		LoadBalancerArn: lb.Arn,
 		Port:            plm.Int(443),
+		CertificateArn:  plm.StringPtr(certificateArn),
 		DefaultActions: alb.ListenerDefaultActionArray{
 			alb.ListenerDefaultActionArgs{
 				Type:           plm.String("forward"),
