@@ -11,6 +11,7 @@ func RegisterAutoTags(ctx *plm.Context, autoTags plm.StringMap) {
 	err := ctx.RegisterStackTransformation(
 		func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
 			ptr := reflect.ValueOf(args.Props)
+			if ptr.IsValid() {
 				val := ptr.Elem()
 				tags := val.FieldByName("Tags")
 
@@ -34,6 +35,8 @@ func RegisterAutoTags(ctx *plm.Context, autoTags plm.StringMap) {
 				} else {
 					return nil
 				}
+			}
+			return nil
 		},
 	)
 
