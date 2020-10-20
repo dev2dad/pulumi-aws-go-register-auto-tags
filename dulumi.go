@@ -57,6 +57,8 @@ func NewFargateApiInfra(ctx *plm.Context,
 	vpcId string,
 	taskRole string,
 	appPort int,
+	appCpu string,
+	appMemory string,
 	appHealthCheckPath string,
 	certificateArn string,
 	scaleMax int,
@@ -78,8 +80,24 @@ func NewFargateApiInfra(ctx *plm.Context,
 		"Name":        plm.String(service),
 	})
 
-	api, err := NewFargateApi(ctx, service, env, subnetIds, securityGroupIds, vpcId, taskRole, appPort, appHealthCheckPath, certificateArn,
-		scaleMax, scaleMin, scaleCpuPercent, opts...)
+	api, err := NewFargateApi(
+		ctx,
+		service,
+		env,
+		subnetIds,
+		securityGroupIds,
+		vpcId,
+		taskRole,
+		appPort,
+		appCpu,
+		appMemory,
+		appHealthCheckPath,
+		certificateArn,
+		scaleMax,
+		scaleMin,
+		scaleCpuPercent,
+		opts...
+	)
 	if err != nil {
 		return err
 	}
