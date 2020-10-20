@@ -99,6 +99,7 @@ func NewFargateApi(ctx *plm.Context,
 		},
 		LoadBalancers: ecs.ServiceLoadBalancerArray{
 			ecs.ServiceLoadBalancerArgs{
+				ElbName: plm.String(fmt.Sprintf("%v-%v", service, env)),
 				TargetGroupArn: targetGroup.Arn,
 				ContainerName:  plm.String("app"),
 				ContainerPort:  plm.Int(appPort),
