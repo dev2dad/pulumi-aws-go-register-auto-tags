@@ -20,6 +20,7 @@ type FargateApi struct {
 func NewFargateApi(ctx *plm.Context,
 	service string,
 	env string,
+	taskSubnetIds []string,
 	subnetIds []string,
 	securityGroupIds []string,
 	vpcId string,
@@ -91,7 +92,7 @@ func NewFargateApi(ctx *plm.Context,
 		},
 		NetworkConfiguration: &ecs.ServiceNetworkConfigurationArgs{
 			AssignPublicIp: plm.Bool(false),
-			Subnets:        utils.ToPulumiStringArray(subnetIds),
+			Subnets:        utils.ToPulumiStringArray(taskSubnetIds),
 			SecurityGroups: utils.ToPulumiStringArray(securityGroupIds),
 		},
 		LoadBalancers: ecs.ServiceLoadBalancerArray{
