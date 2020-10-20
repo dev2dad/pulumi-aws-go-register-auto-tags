@@ -41,3 +41,11 @@ func RegisterAutoTags(ctx *plm.Context, autoTags plm.StringMap) {
 		log.Fatal(err)
 	}
 }
+
+func ToPulumiStringArray(a []string) plm.StringArrayInput {
+	var res []plm.StringInput
+	for _, s := range a {
+		res = append(res, plm.String(s))
+	}
+	return plm.StringArray(res)
+}
