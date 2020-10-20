@@ -78,7 +78,7 @@ func NewFargateApiInfra(ctx *plm.Context,
 	buildSpec string,
 	ignoreGlobal bool,
 	ignoreTypes []string,
-	c []string,
+	ignoreProps []string,
 	opts ...plm.ResourceOption, ) error {
 
 	utils.RegisterAutoTags(ctx, plm.StringMap{
@@ -86,7 +86,7 @@ func NewFargateApiInfra(ctx *plm.Context,
 		"Name":        plm.String(service),
 	})
 
-	utils.IgnoreChanges(ctx, ignoreGlobal, ignoreTypes, ignoreTypes)
+	utils.IgnoreChanges(ctx, ignoreGlobal, ignoreTypes, ignoreProps)
 
 	//err := ctx.RegisterStackTransformation(func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
 	//	return &plm.ResourceTransformationResult{
