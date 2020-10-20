@@ -160,6 +160,7 @@ func apiAlb(
 	dfa FargateApi,
 ) (*alb.TargetGroup, *alb.Listener, error) {
 	lb, err := alb.NewLoadBalancer(ctx, "lb", &alb.LoadBalancerArgs{
+		Name: plm.String(fmt.Sprintf("%v-%v", service, env)),
 		Subnets:        utils.ToPulumiStringArray(subnetIds),
 		SecurityGroups: utils.ToPulumiStringArray(securityGroupIds),
 	}, plm.Parent(&dfa))
