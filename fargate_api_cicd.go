@@ -9,14 +9,13 @@ import (
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 )
 
-type S3StaticWebCICD struct {
+type FargateApiCICD struct {
 	plm.ResourceState
 
 	bucketName plm.IDOutput `pulumi:"bucketName"`
 }
 
-func NewS3StaticWebCICD(ctx *plm.Context,
-	webSiteBucket string,
+func NewFargateApiCICD(ctx *plm.Context,
 	serviceEnv string,
 	buildRole string,
 	pipelineRole string,
@@ -26,9 +25,11 @@ func NewS3StaticWebCICD(ctx *plm.Context,
 	requireApproval bool,
 	requireNoti bool,
 	buildSpec string,
-	opts ...plm.ResourceOption) (*S3StaticWebCICD, error) {
+	ecsCluster string,
+	ecsService string,
+	opts ...plm.ResourceOption) (*FargateApiCICD, error) {
 
-	var cicd S3StaticWebCICD
+	var cicd FargateApiCICD
 	err := ctx.RegisterComponentResource("drama:web:s3-static-cicd", "drama-s3-static-web-cicd", &cicd, opts...)
 	if err != nil {
 		return nil, err
@@ -72,7 +73,7 @@ func NewS3StaticWebCICD(ctx *plm.Context,
 		},
 		Stages: pipeline.PipelineStageArray{
 			NewDefaultCIStage(gitRepo, gitBranch, gitPolling, fmt.Sprintf("%v", buildPrj.Name)),
-			s3StaticWebCD(webSiteBucket, gitRepo, requireApproval, requireNoti),
+			fargateApiCD(ecsCluster, ecsService, gitRepo, requireApproval, requireNoti),
 		},
 	}, plm.Parent(&cicd),
 		plm.IgnoreChanges([]string{"oAuthToken"})); err != nil {
@@ -82,8 +83,9 @@ func NewS3StaticWebCICD(ctx *plm.Context,
 	return &cicd, nil
 }
 
-func s3StaticWebCD(
-	webSiteBucket string,
+func fargateApiCD(
+	ecsCluster string,
+	ecsService string,
 	gitRepo string,
 	approval bool,
 	noti bool,
@@ -92,7 +94,7 @@ func s3StaticWebCD(
 	if approval {
 		actions = AddManualApprovalAction(actions)
 	}
-	actions = AddS3DeployAction(actions, webSiteBucket)
+	actions = AddECSDeployAction(actions, ecsCluster, ecsService)
 	if noti {
 		actions = AddNotifyStageAction(actions, gitRepo)
 	}
