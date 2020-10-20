@@ -99,14 +99,13 @@ func NewFargateApi(ctx *plm.Context,
 		},
 		LoadBalancers: ecs.ServiceLoadBalancerArray{
 			ecs.ServiceLoadBalancerArgs{
-				ElbName: plm.String(fmt.Sprintf("%v-%v", service, env)),
+				ElbName:        plm.String(fmt.Sprintf("%v-%v", service, env)),
 				TargetGroupArn: targetGroup.Arn,
 				ContainerName:  plm.String("app"),
 				ContainerPort:  plm.Int(appPort),
 			},
 		},
 	}, plm.DependsOn([]plm.Resource{listener}),
-		//plm.IgnoreChanges([]string{"taskDefinition", "desiredCount"}),
 		plm.Parent(&dfa))
 	if err != nil {
 		return nil, err
@@ -164,7 +163,7 @@ func apiAlb(
 	dfa FargateApi,
 ) (*alb.TargetGroup, *alb.Listener, error) {
 	lb, err := alb.NewLoadBalancer(ctx, "lb", &alb.LoadBalancerArgs{
-		Name: plm.String(fmt.Sprintf("%v-%v", service, env)),
+		Name:           plm.String(fmt.Sprintf("%v-%v", service, env)),
 		Subnets:        utils.ToPulumiStringArray(subnetIds),
 		SecurityGroups: utils.ToPulumiStringArray(securityGroupIds),
 	}, plm.Parent(&dfa))
