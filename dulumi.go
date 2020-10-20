@@ -83,19 +83,19 @@ func NewFargateApiInfra(ctx *plm.Context,
 		"Name":        plm.String(service),
 	})
 
-	err := ctx.RegisterStackTransformation(func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
-		return &plm.ResourceTransformationResult{
-			Props: args.Props,
-			Opts: append(args.Opts, plm.IgnoreChanges([]string{
-				"taskDefinition",
-				"containerDefinitions",
-				"desiredCount",
-			})),
-		}
-	})
-	if err != nil {
-		return err
-	}
+	//err := ctx.RegisterStackTransformation(func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
+	//	return &plm.ResourceTransformationResult{
+	//		Props: args.Props,
+	//		Opts: append(args.Opts, plm.IgnoreChanges([]string{
+	//			"taskDefinition",
+	//			"containerDefinitions",
+	//			"desiredCount",
+	//		})),
+	//	}
+	//})
+	//if err != nil {
+	//	return err
+	//}
 
 	api, err := NewFargateApi(
 		ctx,

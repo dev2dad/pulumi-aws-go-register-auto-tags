@@ -7,6 +7,22 @@ import (
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 )
 
+func IgnoreChanges(ctx *plm.Context, global bool, types []string, props []string) {
+	err := ctx.RegisterStackTransformation(
+		func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
+			if global || contains(types, args.Type) {
+				return &plm.ResourceTransformationResult{
+					Props: args.Props,
+					Opts:  append(args.Opts, plm.IgnoreChanges(props)),
+				}
+			}
+			return nil
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func RegisterAutoTags(ctx *plm.Context, autoTags plm.StringMap) {
 	err := ctx.RegisterStackTransformation(
 		func(args *plm.ResourceTransformationArgs) *plm.ResourceTransformationResult {
@@ -51,4 +67,13 @@ func ToPulumiStringArray(a []string) plm.StringArrayInput {
 		res = append(res, plm.String(s))
 	}
 	return plm.StringArray(res)
+}
+
+func contains(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
 }
