@@ -78,6 +78,14 @@ func NewS3StaticWeb(ctx *plm.Context,
 		IsIpv6Enabled:     plm.Bool(true),
 		Comment:           plm.String(host),
 		DefaultRootObject: plm.String("index.html"),
+		CustomErrorResponses: cloudfront.DistributionCustomErrorResponseArray{
+			cloudfront.DistributionCustomErrorResponseArgs{
+				ErrorCachingMinTtl: plm.IntPtr(0),
+				ErrorCode:          plm.Int(403),
+				ResponseCode:       plm.IntPtr(200),
+				ResponsePagePath:   plm.StringPtr("index.html"),
+			},
+		},
 		DefaultCacheBehavior: cloudfront.DistributionDefaultCacheBehaviorArgs{
 			AllowedMethods:       plm.StringArray{plm.String("GET"), plm.String("HEAD")},
 			CachedMethods:        plm.StringArray{plm.String("GET"), plm.String("HEAD")},
@@ -119,34 +127,6 @@ func NewS3StaticWeb(ctx *plm.Context,
 	if err != nil {
 		return nil, err
 	}
-
-	//allow := "Allow"
-	//sid := "2"
-	//policy, err := iam.GetPolicyDocument(ctx, &iam.GetPolicyDocumentArgs{
-	//	Statements: []iam.GetPolicyDocumentStatement{
-	//		{
-	//			Sid: &sid,
-	//			Effect: &allow,
-	//			Actions: []string{
-	//				"s3:GetObject",
-	//			},
-	//			Resources: []string{
-	//				fmt.Sprintf("%v/*", bucket.Arn),
-	//			},
-	//			Principals: []iam.GetPolicyDocumentStatementPrincipal{
-	//				{
-	//					Type: "AWS",
-	//					Identifiers: []string{
-	//						fmt.Sprintf("%v", originAccessIdentity.IamArn),
-	//					},
-	//				},
-	//			},
-	//		},
-	//	},
-	//}, plm.Parent(&dsw))
-	//if err != nil {
-	//	return nil, err
-	//}
 
 	if _, err := s3.NewBucketPolicy(ctx, "bucketPolicy", &s3.BucketPolicyArgs{
 		Bucket: bucket.Bucket,
