@@ -99,8 +99,7 @@ func NewS3StaticWeb(ctx *plm.Context,
 			MinimumProtocolVersion: plm.String("TLSv1"),
 
 		},
-	}, plm.Parent(&dsw),
-		plm.IgnoreChanges([]string{"tags"}))
+	}, plm.Parent(&dsw))
 	if err != nil {
 		return nil, err
 	}

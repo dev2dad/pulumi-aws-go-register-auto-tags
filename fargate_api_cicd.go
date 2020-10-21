@@ -4,6 +4,7 @@ import (
 	"fmt"
 	build "github.com/pulumi/pulumi-aws/sdk/v3/go/aws/codebuild"
 	pipeline "github.com/pulumi/pulumi-aws/sdk/v3/go/aws/codepipeline"
+	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/ecr"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/s3"
 
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
@@ -31,6 +32,37 @@ func NewFargateApiCICD(ctx *plm.Context,
 
 	var cicd FargateApiCICD
 	err := ctx.RegisterComponentResource("drama:server:fargate-api-cicd", "drama-fargate-api-cicd", &cicd, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	ecrRepo, err := ecr.NewRepository(ctx, "ecr", &ecr.RepositoryArgs{
+		Name: plm.String(serviceEnv),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = ecr.NewLifecyclePolicy(ctx, "ecrLifecycle", &ecr.LifecyclePolicyArgs{
+		Policy: plm.String(`
+{
+    "rules": [
+        {
+            "rulePriority": 1,
+            "description": "Expire images more than 30",
+            "selection": {
+                "tagStatus": "any",
+                "countType": "imageCountMoreThan",
+                "countNumber": 30
+            },
+            "action": {
+                "type": "expire"
+            }
+        }
+    ]
+}`),
+		Repository: ecrRepo.Name,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +109,7 @@ func NewFargateApiCICD(ctx *plm.Context,
 			fargateApiCD(ecsCluster, ecsService, gitRepo, requireApproval, requireNoti),
 		},
 	}, plm.Parent(&cicd),
+		plm.DependsOn([]plm.Resource{ecrRepo}),
 		plm.IgnoreChanges([]string{"oAuthToken"})); err != nil {
 		return nil, err
 	}
