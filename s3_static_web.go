@@ -96,7 +96,8 @@ func NewS3StaticWeb(ctx *plm.Context,
 		ViewerCertificate: cloudfront.DistributionViewerCertificateArgs{
 			AcmCertificateArn: plm.String(domainSslCertArn),
 		},
-	}, plm.Parent(&dsw))
+	}, plm.Parent(&dsw),
+		plm.IgnoreChanges([]string{"tags"}))
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +119,11 @@ func NewS3StaticWeb(ctx *plm.Context,
 	}
 
 	allow := "Allow"
+	sid := "2"
 	policy, err := iam.GetPolicyDocument(ctx, &iam.GetPolicyDocumentArgs{
 		Statements: []iam.GetPolicyDocumentStatement{
 			{
+				Sid: &sid,
 				Effect: &allow,
 				Actions: []string{
 					"s3:GetObject",
