@@ -49,7 +49,8 @@ func NewS3StaticWebInfra(ctx *plm.Context,
 	return nil
 }
 
-func NewFargateApiInfra(ctx *plm.Context,
+func NewFargateApiInfra(
+	ctx *plm.Context,
 	service string,
 	env string,
 	taskSubnetIds []string,
@@ -67,7 +68,6 @@ func NewFargateApiInfra(ctx *plm.Context,
 	scaleMin int,
 	scaleCpuPercent float64,
 	containerDefinitions string,
-
 	buildRole string,
 	pipelineRole string,
 	gitRepo string,
@@ -76,7 +76,8 @@ func NewFargateApiInfra(ctx *plm.Context,
 	requireApproval bool,
 	requireNoti bool,
 	buildSpec string,
-	opts ...plm.ResourceOption, ) error {
+	opts ...plm.ResourceOption,
+) (*FargateApi, *FargateApiCICD, error) {
 
 	api, err := NewFargateApi(
 		ctx,
@@ -100,15 +101,15 @@ func NewFargateApiInfra(ctx *plm.Context,
 		opts...
 	)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	_, err = NewFargateApiCICD(ctx, fmt.Sprintf("%v-%v", service, env), buildRole,
+	cicd, err := NewFargateApiCICD(ctx, fmt.Sprintf("%v-%v", service, env), buildRole,
 		pipelineRole, gitRepo, gitBranch, gitPolling, requireApproval, requireNoti, buildSpec, service, fmt.Sprintf("%v-%v", service, env))
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	ctx.Export("dns", api.Dns)
-	return nil
+	return api, cicd, nil
 }

@@ -114,12 +114,6 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	if err = ctx.RegisterResourceOutputs(&dfa, plm.Map{
-		"dns": lb.DnsName,
-	}); err != nil {
-		return nil, err
-	}
-
 	logGroup, err := cloudwatch.NewLogGroup(ctx, "logGroup", &cloudwatch.LogGroupArgs{
 		Name:            plm.String(fmt.Sprintf("%v-%v", service, env)),
 		RetentionInDays: plm.IntPtr(30),
@@ -203,6 +197,12 @@ func NewFargateApi(ctx *plm.Context,
 	}, plm.Parent(&dfa),
 		plm.DependsOn([]plm.Resource{svc}))
 	if err != nil {
+		return nil, err
+	}
+
+	if err = ctx.RegisterResourceOutputs(&dfa, plm.Map{
+		"dns": lb.DnsName,
+	}); err != nil {
 		return nil, err
 	}
 
