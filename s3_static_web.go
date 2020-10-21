@@ -3,11 +3,8 @@ package dulumi
 import (
 	"fmt"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/cloudfront"
-	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/route53"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/s3"
-	"log"
-
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 )
 
@@ -118,39 +115,53 @@ func NewS3StaticWeb(ctx *plm.Context,
 		return nil, err
 	}
 
-	allow := "Allow"
-	sid := "2"
-	policy, err := iam.GetPolicyDocument(ctx, &iam.GetPolicyDocumentArgs{
-		Statements: []iam.GetPolicyDocumentStatement{
-			{
-				Sid: &sid,
-				Effect: &allow,
-				Actions: []string{
-					"s3:GetObject",
-				},
-				Resources: []string{
-					fmt.Sprintf("%v/*", bucket.Arn),
-				},
-				Principals: []iam.GetPolicyDocumentStatementPrincipal{
-					{
-						Type: "AWS",
-						Identifiers: []string{
-							fmt.Sprintf("%v", originAccessIdentity.IamArn),
-						},
-					},
-				},
-			},
-		},
-	}, plm.Parent(&dsw))
-	if err != nil {
-		return nil, err
-	}
-
-	log.Print(fmt.Sprintf("%v", policy.Json))
+	//allow := "Allow"
+	//sid := "2"
+	//policy, err := iam.GetPolicyDocument(ctx, &iam.GetPolicyDocumentArgs{
+	//	Statements: []iam.GetPolicyDocumentStatement{
+	//		{
+	//			Sid: &sid,
+	//			Effect: &allow,
+	//			Actions: []string{
+	//				"s3:GetObject",
+	//			},
+	//			Resources: []string{
+	//				fmt.Sprintf("%v/*", bucket.Arn),
+	//			},
+	//			Principals: []iam.GetPolicyDocumentStatementPrincipal{
+	//				{
+	//					Type: "AWS",
+	//					Identifiers: []string{
+	//						fmt.Sprintf("%v", originAccessIdentity.IamArn),
+	//					},
+	//				},
+	//			},
+	//		},
+	//	},
+	//}, plm.Parent(&dsw))
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	if _, err := s3.NewBucketPolicy(ctx, "bucketPolicy", &s3.BucketPolicyArgs{
 		Bucket: bucket.Bucket,
-		Policy: plm.String(fmt.Sprintf("%v", policy.Json)),
+		Policy: plm.Any(map[string]interface{}{
+			"Version": "2012-10-17",
+			"Statement": []map[string]interface{}{
+				{
+					"Effect":    "Allow",
+					"Principal": map[string]interface{}{
+						"AWS": plm.Sprintf("%s", originAccessIdentity.IamArn),
+					},
+					"Action": []interface{}{
+						"s3:GetObject",
+					},
+					"Resource": []interface{}{
+						plm.Sprintf("%s/*", bucket.Arn),
+					},
+				},
+			},
+		}),
 	}, plm.Parent(&dsw)); err != nil {
 		return nil, err
 	}
