@@ -104,8 +104,20 @@ func NewFargateApiInfra(
 		return nil, nil, err
 	}
 
-	cicd, err := NewFargateApiCICD(ctx, fmt.Sprintf("%v-%v", service, env), buildRole,
-		pipelineRole, gitRepo, gitBranch, gitPolling, requireApproval, requireNoti, buildSpec, service, fmt.Sprintf("%v-%v", service, env))
+	cicd, err := NewFargateApiCICD(
+		ctx,
+		fmt.Sprintf("%v-%v", service, env),
+		buildRole,
+		pipelineRole,
+		gitRepo,
+		gitBranch,
+		gitPolling,
+		requireApproval,
+		requireNoti,
+		buildSpec,
+		service,
+		fmt.Sprintf("%v-%v", service, env),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
