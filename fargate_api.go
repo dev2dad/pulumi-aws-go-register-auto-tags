@@ -206,5 +206,7 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
+	dfa.Dns = lb.DnsName
+
 	return &dfa, nil
 }
