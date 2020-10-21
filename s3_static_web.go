@@ -83,7 +83,7 @@ func NewS3StaticWeb(ctx *plm.Context,
 				ErrorCachingMinTtl: plm.IntPtr(0),
 				ErrorCode:          plm.Int(403),
 				ResponseCode:       plm.IntPtr(200),
-				ResponsePagePath:   plm.StringPtr("index.html"),
+				ResponsePagePath:   plm.StringPtr("/index.html"),
 			},
 		},
 		DefaultCacheBehavior: cloudfront.DistributionDefaultCacheBehaviorArgs{
