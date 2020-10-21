@@ -92,6 +92,9 @@ func NewS3StaticWeb(ctx *plm.Context,
 		},
 		ViewerCertificate: cloudfront.DistributionViewerCertificateArgs{
 			AcmCertificateArn: plm.String(domainSslCertArn),
+			SslSupportMethod: plm.String("sni-only"),
+			MinimumProtocolVersion: plm.String("TLSv1"),
+
 		},
 	}, plm.Parent(&dsw),
 		plm.IgnoreChanges([]string{"tags"}))
