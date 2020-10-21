@@ -73,7 +73,7 @@ func NewFargateApiCICD(ctx *plm.Context,
 		},
 		Stages: pipeline.PipelineStageArray{
 			NewGithubSourceStage(gitRepo, gitBranch, gitPolling),
-			NewCodebuildStage(serviceEnv),
+			NewCodebuildStage(serviceEnv, false, false, ""),
 			fargateApiCD(ecsCluster, ecsService, gitRepo, requireApproval, requireNoti),
 		},
 	}, plm.Parent(&cicd),

@@ -72,8 +72,7 @@ func NewS3StaticWebCICD(ctx *plm.Context,
 		},
 		Stages: pipeline.PipelineStageArray{
 			NewGithubSourceStage(gitRepo, gitBranch, gitPolling),
-			NewCodebuildStage(fmt.Sprintf("%v", buildPrj.Name)),
-			s3StaticWebCD(webSiteBucket, gitRepo, requireApproval, requireNoti),
+			NewCodebuildStage(fmt.Sprintf("%v", buildPrj.Name), requireApproval, requireNoti, gitRepo),
 		},
 	}, plm.Parent(&cicd),
 		plm.IgnoreChanges([]string{"oAuthToken"})); err != nil {
@@ -81,25 +80,4 @@ func NewS3StaticWebCICD(ctx *plm.Context,
 	}
 
 	return &cicd, nil
-}
-
-func s3StaticWebCD(
-	webSiteBucket string,
-	gitRepo string,
-	approval bool,
-	noti bool,
-) pipeline.PipelineStageArgs {
-	actions := pipeline.PipelineStageActionArray{}
-	if approval {
-		actions = AddManualApprovalAction(actions)
-	}
-	actions = AddS3DeployAction(actions, webSiteBucket)
-	if noti {
-		actions = AddNotifyStageAction(actions, gitRepo)
-	}
-
-	return pipeline.PipelineStageArgs{
-		Name:    plm.String("CD"),
-		Actions: actions,
-	}
 }
