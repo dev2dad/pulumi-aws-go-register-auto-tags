@@ -98,18 +98,12 @@ func NewFargateApi(ctx *plm.Context,
 	if err != nil {
 		return nil, err
 	}
-	https, err := alb.NewListener(ctx, "httpsListener", &alb.ListenerArgs{
-		LoadBalancerArn: lb.Arn,
-		Protocol:        plm.String("HTTPS"),
-		Port:            plm.Int(443),
-		CertificateArn:  plm.StringPtr(certificateArn),
-		DefaultActions: alb.ListenerDefaultActionArray{
-			alb.ListenerDefaultActionArgs{
-				Type:           plm.String("forward"),
-				TargetGroupArn: tg.Arn,
-			},
-		},
-	}, plm.Parent(&dfa))
+	https, err := alb.NewListener(
+		ctx,
+		"httpsListener",
+		NewSimpleForwardingHttpsListener(lb, tg, certificateArn),
+		plm.Parent(&dfa),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -209,4 +203,28 @@ func NewFargateApi(ctx *plm.Context,
 	dfa.Dns = lb.DnsName
 
 	return &dfa, nil
+}
+
+func NewSimpleForwardingHttpsListener(
+	lb *alb.LoadBalancer,
+	tg *alb.TargetGroup,
+	certificateArn string,
+) *alb.ListenerArgs {
+
+	https := alb.ListenerArgs{
+		LoadBalancerArn: lb.Arn,
+		Protocol:        plm.String("HTTPS"),
+		Port:            plm.Int(443),
+		DefaultActions: alb.ListenerDefaultActionArray{
+			alb.ListenerDefaultActionArgs{
+				Type:           plm.String("forward"),
+				TargetGroupArn: tg.Arn,
+			},
+		},
+	}
+
+	if certificateArn != "" {
+		https.CertificateArn = plm.StringPtr(certificateArn)
+	}
+	return &https
 }
