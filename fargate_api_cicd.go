@@ -134,7 +134,7 @@ func fargateApiCD(
 	}
 
 	return pipeline.PipelineStageArgs{
-		Name:    plm.String("CD"),
+		Name:    plm.String("Deploy"),
 		Actions: actions,
 	}
 }

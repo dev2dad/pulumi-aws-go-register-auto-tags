@@ -124,7 +124,7 @@ func NewCodebuildStage(buildProjectName string, approval bool, noti bool, gitRep
 	}
 
 	return pipeline.PipelineStageArgs{
-		Name:    plm.String("Build"),
+		Name:    plm.String("BuildDeploy"),
 		Actions: actions,
 	}
 }
