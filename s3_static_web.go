@@ -57,6 +57,9 @@ func NewS3StaticWeb(ctx *plm.Context,
 	}
 
 	distribution, err := cloudfront.NewDistribution(ctx, "distribution", &cloudfront.DistributionArgs{
+		Aliases: plm.StringArray{
+			plm.String(host),
+		},
 		Origins: cloudfront.DistributionOriginArray{
 			&cloudfront.DistributionOriginArgs{
 				DomainName: bucket.BucketRegionalDomainName,
