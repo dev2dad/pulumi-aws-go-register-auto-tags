@@ -6,6 +6,7 @@ import (
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/cloudwatch"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/ecs"
 	alb "github.com/pulumi/pulumi-aws/sdk/v3/go/aws/lb"
+	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/route53"
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"github.com/sallgoood/dulumi/utils"
 	"strconv"
@@ -30,6 +31,8 @@ func NewFargateApi(ctx *plm.Context,
 	appCpu string,
 	appMemory string,
 	appHealthCheckPath string,
+	domain string,
+	subdomain string,
 	certificateArn string,
 	scaleMax int,
 	scaleMin int,
@@ -190,6 +193,29 @@ func NewFargateApi(ctx *plm.Context,
 		},
 	}, plm.Parent(&dfa),
 		plm.DependsOn([]plm.Resource{svc}))
+	if err != nil {
+		return nil, err
+	}
+
+	zone, err := route53.LookupZone(ctx, &route53.LookupZoneArgs{
+		Name: &domain,
+	}, plm.Parent(&dfa))
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = route53.NewRecord(ctx, "record", &route53.RecordArgs{
+		Name:   plm.String(fmt.Sprintf("%v.%v", subdomain, domain)),
+		Type:   plm.String("A"),
+		ZoneId: plm.String(zone.ZoneId),
+		Aliases: route53.RecordAliasArray{
+			&route53.RecordAliasArgs{
+				Name:                 lb.DnsName,
+				ZoneId:               lb.ZoneId,
+				EvaluateTargetHealth: plm.Bool(true),
+			},
+		},
+	}, plm.Parent(&dfa))
 	if err != nil {
 		return nil, err
 	}
