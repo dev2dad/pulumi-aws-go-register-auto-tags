@@ -11,7 +11,7 @@ func NewS3StaticWebInfra(ctx *plm.Context,
 	domain string,
 	service string,
 	env string,
-	domainSslCertId string,
+	domainSslCertArn string,
 	gitBranch string,
 	gitPolling bool,
 	requireApproval bool,
@@ -23,7 +23,7 @@ func NewS3StaticWebInfra(ctx *plm.Context,
 		"Name":        plm.String(service),
 	})
 
-	dsw, err := NewS3StaticWeb(ctx, host, domain, fmt.Sprintf("%v-%v", service, env), domainSslCertId)
+	dsw, err := NewS3StaticWeb(ctx, host, domain, fmt.Sprintf("%v-%v", service, env), domainSslCertArn)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/route53"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/s3"
+	"log"
 
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 )
@@ -21,7 +22,7 @@ func NewS3StaticWeb(ctx *plm.Context,
 	host string,
 	domain string,
 	envService string,
-	domainSslCertId string,
+	domainSslCertArn string,
 	opts ...plm.ResourceOption) (*S3StaticWeb, error) {
 
 	var dsw S3StaticWeb
@@ -93,7 +94,7 @@ func NewS3StaticWeb(ctx *plm.Context,
 			},
 		},
 		ViewerCertificate: cloudfront.DistributionViewerCertificateArgs{
-			IamCertificateId: plm.String(domainSslCertId),
+			AcmCertificateArn: plm.String(domainSslCertArn),
 		},
 	}, plm.Parent(&dsw))
 	if err != nil {
@@ -116,9 +117,11 @@ func NewS3StaticWeb(ctx *plm.Context,
 		return nil, err
 	}
 
+	allow := "Allow"
 	policy, err := iam.GetPolicyDocument(ctx, &iam.GetPolicyDocumentArgs{
 		Statements: []iam.GetPolicyDocumentStatement{
 			{
+				Effect: &allow,
 				Actions: []string{
 					"s3:GetObject",
 				},
@@ -139,6 +142,8 @@ func NewS3StaticWeb(ctx *plm.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	log.Print(fmt.Sprintf("%v", policy.Json))
 
 	if _, err := s3.NewBucketPolicy(ctx, "bucketPolicy", &s3.BucketPolicyArgs{
 		Bucket: bucket.Bucket,
