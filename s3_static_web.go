@@ -13,7 +13,7 @@ import (
 type S3StaticWeb struct {
 	plm.ResourceState
 
-	BucketName plm.IDOutput `pulumi:"bucketName"`
+	BucketName     plm.IDOutput `pulumi:"bucketName"`
 	DistributionId plm.IDOutput `pulumi:"id"`
 }
 
@@ -21,7 +21,7 @@ func NewS3StaticWeb(ctx *plm.Context,
 	host string,
 	domain string,
 	envService string,
-	domainSslCertArn string,
+	domainSslCertId string,
 	opts ...plm.ResourceOption) (*S3StaticWeb, error) {
 
 	var dsw S3StaticWeb
@@ -93,7 +93,7 @@ func NewS3StaticWeb(ctx *plm.Context,
 			},
 		},
 		ViewerCertificate: cloudfront.DistributionViewerCertificateArgs{
-			AcmCertificateArn: plm.String(domainSslCertArn),
+			IamCertificateId: plm.String(domainSslCertId),
 		},
 	}, plm.Parent(&dsw))
 	if err != nil {
@@ -142,14 +142,14 @@ func NewS3StaticWeb(ctx *plm.Context,
 
 	if _, err := s3.NewBucketPolicy(ctx, "bucketPolicy", &s3.BucketPolicyArgs{
 		Bucket: bucket.Bucket,
-		Policy: plm.String(policy.Json),
+		Policy: plm.String(fmt.Sprintf("%v", policy.Json)),
 	}, plm.Parent(&dsw)); err != nil {
 		return nil, err
 	}
 
 	dsw.BucketName = bucket.ID()
 	if err = ctx.RegisterResourceOutputs(&dsw, plm.Map{
-		"bucketName": bucket.Bucket,
+		"bucketName":     bucket.Bucket,
 		"distributionId": distribution.ID(),
 	}); err != nil {
 		return nil, err
