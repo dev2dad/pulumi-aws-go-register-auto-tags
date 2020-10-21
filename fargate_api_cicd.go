@@ -12,7 +12,7 @@ import (
 type FargateApiCICD struct {
 	plm.ResourceState
 
-	bucketName plm.IDOutput `pulumi:"bucketName"`
+	BucketName plm.IDOutput `pulumi:"bucketName"`
 }
 
 func NewFargateApiCICD(ctx *plm.Context,
