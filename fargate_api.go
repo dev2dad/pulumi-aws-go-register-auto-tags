@@ -197,27 +197,29 @@ func NewFargateApi(ctx *plm.Context,
 		return nil, err
 	}
 
-	zone, err := route53.LookupZone(ctx, &route53.LookupZoneArgs{
-		Name: &domain,
-	}, plm.Parent(&dfa))
-	if err != nil {
-		return nil, err
-	}
+	if certificateArn != "" {
+		zone, err := route53.LookupZone(ctx, &route53.LookupZoneArgs{
+			Name: &domain,
+		}, plm.Parent(&dfa))
+		if err != nil {
+			return nil, err
+		}
 
-	_, err = route53.NewRecord(ctx, "record", &route53.RecordArgs{
-		Name:   plm.String(fmt.Sprintf("%v.%v", subdomain, domain)),
-		Type:   plm.String("A"),
-		ZoneId: plm.String(zone.ZoneId),
-		Aliases: route53.RecordAliasArray{
-			&route53.RecordAliasArgs{
-				Name:                 lb.DnsName,
-				ZoneId:               lb.ZoneId,
-				EvaluateTargetHealth: plm.Bool(true),
+		_, err = route53.NewRecord(ctx, "record", &route53.RecordArgs{
+			Name:   plm.String(fmt.Sprintf("%v.%v", subdomain, domain)),
+			Type:   plm.String("A"),
+			ZoneId: plm.String(zone.ZoneId),
+			Aliases: route53.RecordAliasArray{
+				&route53.RecordAliasArgs{
+					Name:                 lb.DnsName,
+					ZoneId:               lb.ZoneId,
+					EvaluateTargetHealth: plm.Bool(true),
+				},
 			},
-		},
-	}, plm.Parent(&dfa))
-	if err != nil {
-		return nil, err
+		}, plm.Parent(&dfa))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err = ctx.RegisterResourceOutputs(&dfa, plm.Map{
