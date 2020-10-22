@@ -105,8 +105,8 @@ func NewFargateApiCICD(ctx *plm.Context,
 		},
 		Stages: pipeline.PipelineStageArray{
 			NewGithubSourceStage(gitRepo, gitBranch, gitPolling),
-			NewCodebuildStage(serviceEnv, false, false, ""),
-			fargateApiCD(ecsCluster, ecsService, gitRepo, requireApproval, requireNoti),
+			NewCodebuildStage(serviceEnv, requireApproval, false, ""),
+			fargateApiCD(ecsCluster, ecsService, gitRepo, requireNoti),
 		},
 	}, plm.Parent(&cicd),
 		plm.DependsOn([]plm.Resource{ecrRepo}),
@@ -121,13 +121,9 @@ func fargateApiCD(
 	ecsCluster string,
 	ecsService string,
 	gitRepo string,
-	approval bool,
 	noti bool,
 ) pipeline.PipelineStageArgs {
 	actions := pipeline.PipelineStageActionArray{}
-	if approval {
-		actions = AddManualApprovalAction(actions)
-	}
 	actions = AddECSDeployAction(actions, ecsCluster, ecsService)
 	if noti {
 		actions = AddNotifyStageAction(actions, gitRepo)
