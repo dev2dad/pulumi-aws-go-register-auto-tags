@@ -110,17 +110,13 @@ func NewGithubSourceStage(gitRepo string, gitBranch string, gitPolling bool) pip
 	}
 }
 
-func NewCodebuildStage(buildProjectName string, approval bool, noti bool, gitRepo string) pipeline.PipelineStageArgs {
+func NewCodebuildStage(buildProjectName string, approval bool) pipeline.PipelineStageArgs {
 	actions := pipeline.PipelineStageActionArray{}
 
 	actions = AddCodeBuildAction(actions, buildProjectName)
 
 	if approval {
 		actions = AddManualApprovalAction(actions)
-	}
-
-	if noti {
-		actions = AddNotifyStageAction(actions, gitRepo)
 	}
 
 	return pipeline.PipelineStageArgs{

@@ -72,7 +72,7 @@ func NewS3StaticWebCICD(ctx *plm.Context,
 		},
 		Stages: pipeline.PipelineStageArray{
 			NewGithubSourceStage(gitRepo, gitBranch, gitPolling),
-			NewCodebuildStage(fmt.Sprintf("%v", buildPrj.Name), requireApproval, requireNoti, gitRepo),
+			NewCodebuildStage(fmt.Sprintf("%v", buildPrj.Name), requireApproval),
 		},
 	}, plm.Parent(&cicd),
 		plm.IgnoreChanges([]string{"oAuthToken"})); err != nil {
