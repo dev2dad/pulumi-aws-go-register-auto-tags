@@ -11,7 +11,7 @@ import (
 type S3StaticWeb struct {
 	plm.ResourceState
 
-	BucketName     plm.IDOutput `pulumi:"bucketName"`
+	BucketName     plm.StringOutput `pulumi:"bucketName"`
 	DistributionId plm.IDOutput `pulumi:"id"`
 }
 
@@ -151,7 +151,8 @@ func NewS3StaticWeb(ctx *plm.Context,
 		return nil, err
 	}
 
-	dsw.BucketName = bucket.ID()
+	dsw.BucketName = bucket.Bucket
+	dsw.DistributionId =distribution.ID()
 	if err = ctx.RegisterResourceOutputs(&dsw, plm.Map{
 		"bucketName":     bucket.Bucket,
 		"distributionId": distribution.ID(),
