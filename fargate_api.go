@@ -179,7 +179,7 @@ func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
 
 	_, err = scm.NewSecretVersion(ctx, fmt.Sprintf("secrets"), &scm.SecretVersionArgs{
 		SecretId:     secretManager.ID(),
-		SecretString: plm.String(secretJson),
+		SecretString: plm.ToSecret(plm.String(secretJson)).(plm.StringOutput),
 	}, plm.Parent(&dfa),
 		plm.DependsOn([]plm.Resource{secretManager}))
 	if err != nil {
