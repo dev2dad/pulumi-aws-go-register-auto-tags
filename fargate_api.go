@@ -57,11 +57,12 @@ type FargateApiArgs struct {
 	GitRepo   string `json:"git-repo"`
 	GitBranch string `json:"git-branch"`
 
-	CICDBuildRole           string `json:"cicd-build-role"`
-	CICDPipelineRole        string `json:"cicd-pipeline-role"`
-	CICDGitPolling          bool   `json:"cicd-git-polling"`
-	CICDRequireApproval     bool   `json:"cicd-require-approval"`
-	CICDRequireNotification bool   `json:"cicd-require-notification"`
+	CICDBuildRole           string              `json:"cicd-build-role"`
+	CICDPipelineRole        string              `json:"cicd-pipeline-role"`
+	CICDGitPolling          bool                `json:"cicd-git-polling"`
+	CICDRequireApproval     bool                `json:"cicd-require-approval"`
+	CICDRequireNotification bool                `json:"cicd-require-notification"`
+	CICDBuildEnvs           []map[string]string `json:"cicd-build-envs"`
 }
 
 func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
@@ -338,10 +339,11 @@ func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
 			Type: plm.String("CODEPIPELINE"),
 		},
 		Environment: build.ProjectEnvironmentArgs{
-			ComputeType:    plm.String("BUILD_GENERAL1_SMALL"),
-			Image:          plm.String("aws/codebuild/amazonlinux2-x86_64-standard:3.0"),
-			PrivilegedMode: plm.Bool(true),
-			Type:           plm.String("LINUX_CONTAINER"),
+			ComputeType:          plm.String("BUILD_GENERAL1_SMALL"),
+			Image:                plm.String("aws/codebuild/amazonlinux2-x86_64-standard:3.0"),
+			PrivilegedMode:       plm.Bool(true),
+			Type:                 plm.String("LINUX_CONTAINER"),
+			EnvironmentVariables: AppendBuildEnvs(c.CICDBuildEnvs, build.ProjectEnvironmentEnvironmentVariableArray{}),
 		},
 		Name:        plm.String(productEnv),
 		ServiceRole: plm.String(c.CICDBuildRole),
