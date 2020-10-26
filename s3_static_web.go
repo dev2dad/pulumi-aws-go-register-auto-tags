@@ -74,7 +74,6 @@ func NewS3StaticWeb(ctx *plm.Context, c *S3StaticWebArgs,
 		},
 	}, plm.Parent(&dsw))
 	if err != nil {
-		println("test")
 		return nil, err
 	}
 
