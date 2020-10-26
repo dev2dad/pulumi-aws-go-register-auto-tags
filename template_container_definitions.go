@@ -2,8 +2,6 @@ package dulumi
 
 import (
 	"bytes"
-	"fmt"
-	"strings"
 	"text/template"
 )
 
@@ -22,22 +20,16 @@ func ContainerDefinitionTemplate(
 		AppEnableLogrouter                                   bool
 	}
 
-	var envs []string
-	for k, v := range appEnvs {
-		envs = append(envs, env(k, v))
-	}
+	envs := ContainerEnvs(appEnvs)
 
-	var secrets []string
-	for k := range appSecrets {
-		secrets = append(secrets, secret(secretArn, k))
-	}
+	secrets := ContainerSecrets(appSecrets, secretArn)
 
 	param := ContainerParameter{
 		appImage,
 		appPort,
 		awsLogsGroup,
-		strings.Join(envs, ","),
-		strings.Join(secrets, ","),
+		ContainerEnvJsonArray(envs),
+		ContainerEnvJsonArray(secrets),
 		appEnableLogrouter,
 	}
 
@@ -48,20 +40,6 @@ func ContainerDefinitionTemplate(
 		panic("invalid containerDefinition")
 	}
 	return buf.String()
-}
-
-func env(key string, value string) string {
-	return fmt.Sprintf(`{
-	"name": "%v",
-	"value": "%v"
-	}`, key, value)
-}
-
-func secret(secretArn *string, secret string) string {
-	return fmt.Sprintf(`{
-	"valueFrom": "%v:%v::",
-	"name": "%v"
-	}`, *secretArn, secret, secret)
 }
 
 const definition = `[
