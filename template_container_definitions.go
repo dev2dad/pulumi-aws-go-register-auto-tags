@@ -12,17 +12,20 @@ func ContainerDefinitionTemplate(
 	appEnvs map[string]string,
 	secretArn *string,
 	appSecrets map[string]string,
+	logRouterEnvs map[string]string,
 	appEnableLogrouter bool,
 ) string {
 
 	type ContainerParameter struct {
-		AppImage, AppPort, AwsLogsGroup, AppEnvs, AppSecrets string
-		AppEnableLogrouter                                   bool
+		AppImage, AppPort, AwsLogsGroup, AppEnvs, AppSecrets, LogRouterEnvs string
+		AppEnableLogrouter                                                  bool
 	}
 
 	envs := ContainerEnvs(appEnvs)
 
 	secrets := ContainerSecrets(appSecrets, secretArn)
+
+	logEnvs := ContainerEnvs(logRouterEnvs)
 
 	param := ContainerParameter{
 		appImage,
@@ -30,6 +33,7 @@ func ContainerDefinitionTemplate(
 		awsLogsGroup,
 		ContainerEnvJsonArray(envs),
 		ContainerEnvJsonArray(secrets),
+		ContainerEnvJsonArray(logEnvs),
 		appEnableLogrouter,
 	}
 
@@ -108,15 +112,20 @@ const definition = `[
       }
     ],
     "cpu": 0,
-    "environment": [],
-    "mountPoints": [],
-    "volumesFrom": [],
-    "image": "784015586554.dkr.ecr.ap-northeast-1.amazonaws.com/mybridge-aws-fluent-bit",
+    "ulimits": [{
+      "name": "nofile",
+      "softLimit": 65535,
+      "hardLimit": 65535
+    }],
+    "environment": [
+        {{.LogRouterEnvs}}
+    ],
+    "image": "784015586554.dkr.ecr.ap-northeast-1.amazonaws.com/drama-aws-fluent-bit:latest",
     "firelensConfiguration": {
       "type": "fluentbit",
       "options": {
         "config-file-type": "file",
-        "config-file-value": "/fluent-bit/etc/mybridge-fluent-bit.conf"
+        "config-file-value": "/fluent-bit/etc/drama-fluent-bit.conf"
       }
     },
     "user": "0",

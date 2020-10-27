@@ -53,6 +53,7 @@ type FargateApiArgs struct {
 	AppCpu             string            `json:"app-cpu"`
 	AppMemory          string            `json:"app-memory"`
 	AppEnableLogRouter bool              `json:"app-enable-logrouter"`
+	AppLogRouterEnvs   map[string]string `json:"app-logrouter-envs"`
 
 	GitRepo   string `json:"git-repo"`
 	GitBranch string `json:"git-branch"`
@@ -65,7 +66,14 @@ type FargateApiArgs struct {
 	CICDBuildEnvs           []map[string]string `json:"cicd-build-envs"`
 }
 
+type Ignore struct {
+	Global bool
+	Types  []string
+	Props  []string
+}
+
 func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
+	ignore Ignore,
 	opts ...plm.ResourceOption,
 ) (*FargateApi, error) {
 	utils.RegisterAutoTags(ctx, plm.StringMap{
@@ -75,15 +83,7 @@ func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
 		"Team":        plm.String("dev"),
 	})
 
-	utils.IgnoreChanges(ctx,
-		true,
-		nil,
-		[]string{
-			"taskDefinition",
-			"oAuthToken",
-			"containerDefinitions",
-			"desiredCount",
-		})
+	utils.IgnoreChanges(ctx, ignore.Global, ignore.Types, ignore.Props)
 
 	var dfa FargateApi
 	err := ctx.RegisterComponentResource("drama:server:fargate-api", "drama-fargate-api", &dfa, opts...)
@@ -216,6 +216,7 @@ func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
 			c.AppEnvs,
 			&secretArn,
 			c.AppSecrets,
+			c.AppLogRouterEnvs,
 			c.AppEnableLogRouter,
 		)),
 	}, plm.Parent(&dfa),
