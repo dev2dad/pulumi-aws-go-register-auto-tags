@@ -166,7 +166,8 @@ func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
 	}
 
 	secretManager, err := scm.NewSecret(ctx, "secretManager", &scm.SecretArgs{
-		Name: plm.String(productEnv),
+		Name:                 plm.String(productEnv),
+		RecoveryWindowInDays: plm.Int(0),
 	}, plm.Parent(&dfa))
 	if err != nil {
 		return nil, err
@@ -356,6 +357,14 @@ func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
 		return nil, err
 	}
 
+	stages := pipeline.PipelineStageArray{
+		NewGithubSourceStage(c.GitRepo, c.GitBranch, c.CICDGitPolling),
+		NewCodebuildStage(productEnv, c.CICDRequireApproval),
+		fargateApiCD(c.Product, productEnv),
+	}
+
+	stages = NewNotifyStageAction(stages, c.GitRepo, c.CICDRequireNotification)
+
 	if _, err := pipeline.NewPipeline(ctx, "codepipeline", &pipeline.PipelineArgs{
 		Name:    plm.String(productEnv),
 		RoleArn: plm.String(c.CICDPipelineRole),
@@ -363,11 +372,7 @@ func NewFargateApi(ctx *plm.Context, c FargateApiArgs,
 			Location: bucket.Bucket,
 			Type:     plm.String("S3"),
 		},
-		Stages: pipeline.PipelineStageArray{
-			NewGithubSourceStage(c.GitRepo, c.GitBranch, c.CICDGitPolling),
-			NewCodebuildStage(productEnv, c.CICDRequireApproval),
-			fargateApiCD(c.Product, productEnv),
-		},
+		Stages: stages,
 	}, plm.Parent(&dfa),
 		plm.DependsOn([]plm.Resource{ecrRepo}),
 		plm.IgnoreChanges([]string{"oAuthToken"})); err != nil {

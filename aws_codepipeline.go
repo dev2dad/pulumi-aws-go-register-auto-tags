@@ -6,24 +6,31 @@ import (
 	plm "github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 )
 
-func AddNotifyStageAction(actions pipeline.PipelineStageActionArray, gitRepo string) pipeline.PipelineStageActionArray {
-	return append(actions,
-		pipeline.PipelineStageActionArgs{
-			Name:           plm.String("Notify"),
-			Category:       plm.String("Invoke"),
-			InputArtifacts: plm.StringArray{plm.String("SourceArtifact")},
-			Owner:          plm.String("AWS"),
-			Provider:       plm.String("Lambda"),
-			Configuration: plm.StringMap{
-				"FunctionName": plm.String("code-pipeline-production"),
-				"UserParameters": plm.String(fmt.Sprintf(`{
-							"owner"       : "%v"
-							"repo"        : "%v"
+func NewNotifyStageAction(stages pipeline.PipelineStageArray, gitRepo string, notify bool) pipeline.PipelineStageArray {
+	if notify {
+		return append(stages, pipeline.PipelineStageArgs{
+			Name: plm.String("Notify"),
+			Actions: pipeline.PipelineStageActionArray{
+				pipeline.PipelineStageActionArgs{
+					Name:           plm.String("Notify"),
+					Category:       plm.String("Invoke"),
+					InputArtifacts: plm.StringArray{plm.String("SourceArtifact")},
+					Owner:          plm.String("AWS"),
+					Provider:       plm.String("Lambda"),
+					Configuration: plm.StringMap{
+						"FunctionName": plm.String("code-pipeline-production"),
+						"UserParameters": plm.String(fmt.Sprintf(`{
+							"owner"       : "%v",
+							"repo"        : "%v",
 							"serviceName" : "%v"
 						}`, "dramancompany", gitRepo, "Remember")),
+					},
+					Version: plm.String("1"),
+				},
 			},
-			Version: plm.String("1"),
 		})
+	}
+	return stages
 }
 
 func AddManualApprovalAction(actions pipeline.PipelineStageActionArray) pipeline.PipelineStageActionArray {
